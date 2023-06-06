@@ -26,7 +26,7 @@ class TaskController extends AbstractController
     {
         $data = $request->request->all();
         
-        // Verificar se o campo 'title' está presente e não está vazio
+       
         if (isset($data['title']) && !empty($data['title'])) {
             $task = new Task();
             $task->setTitle($data['title']);
@@ -48,18 +48,14 @@ class TaskController extends AbstractController
 
 
 
-    
-    
-    
-
-
-    #[Route('/tasks/{pgnum}', name: 'task_pagination', methods:['GET'])]
-public function paginateTasks(int $pgnum, Request $request, TaskRepository $taskRepository, PaginatorInterface $paginator): JsonResponse
+    #[Route('/tasks/{pgnum}/{rgnum}', name: 'task_pagination', methods:['GET'])]
+public function paginateTasks(int $pgnum,int $rgnum, Request $request, TaskRepository $taskRepository, PaginatorInterface $paginator): JsonResponse
 {
 
     $number = $pgnum;
+    $numberg = $rgnum;
     $page = $request->query->getInt('page', $number); 
-    $perPage = $request->query->getInt('per_page', 5); 
+    $perPage = $request->query->getInt('per_page', $numberg); 
 
     $pagination = $paginator->paginate(
         $taskRepository->createQueryBuilder('t'),
