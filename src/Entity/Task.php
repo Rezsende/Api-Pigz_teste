@@ -26,6 +26,11 @@ class Task
 
    
 
+    #[ORM\Column(length: 255)]
+    private ?string $stTask = null;
+
+    #[ORM\Column]
+    private ?float $concluded = null;
 
     public function getId(): ?int
     {
@@ -67,5 +72,42 @@ class Task
         return $this;
     }
 
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->getId(),
+            'title' => $this->getTitle(),
+            // Adicione aqui outras propriedades que deseja incluir no array
+        ];
+    }
+
+
+
+    public function getStTask(): ?string
+    {
+        return $this->stTask;
+    }
+
+    public function setStTask(string $stTask): self
+    {
+        $this->stTask = $stTask;
+
+        return $this;
+    }
+
+   
+    public function getConcluded(): ?float
+    {
+        return $this->concluded;
+    }
+
+    public function setConcluded(float $concluded): self
+    {
+        $this->concluded = $concluded;
+
+        return $this;
+    }
+
+ 
 
 }

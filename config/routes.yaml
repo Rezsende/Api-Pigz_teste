@@ -4,4 +4,6 @@ controllers:
         namespace: App\Controller
     type: attribute
     prefix: /api
+authentication_token:
+    path: /authentication_token
 
