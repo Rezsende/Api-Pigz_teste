@@ -10,132 +10,164 @@ use App\Repository\TaskRepository;
 use App\Entity\Task;
 use Knp\Component\Pager\PaginatorInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Entity\SubTask;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 class TaskController extends AbstractController
 {
-    private $paginator;
-    #[Route('/task', name: 'task_list', methods:['GET'])]
-    public function index(TaskRepository $taskRepository): JsonResponse
+    private EntityManagerInterface $entityManager;
+    public function __construct(EntityManagerInterface $entityManager)
     {
-        return $this->json([
-            'data' => $taskRepository->findAll(),
-        ], 200);
+        $this->entityManager = $entityManager;
     }
-
   
-    #[Route('/task', name: 'task_create', methods: ['POST'])]
-    public function create(Request $request, TaskRepository $taskRepository): JsonResponse
-    {
-        $content = $request->getContent();
-    
-        
-        if (!empty($content)) {
-            $data = json_decode($content, true);
-    
-           
-            if (isset($data['title']) && !empty($data['title'])) {
-                $task = new Task();
-                $task->setTitle($data['title']);
-                $task->setStTask("Pendente");
-                $task->setConcluded(0);
-                $task->setCreatedAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
-                $task->setUpdateAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
-    
-                $taskRepository->save($task, true);
-    
-                return $this->json([
-                    'message' => 'Task Criada com Sucesso',
-                    'data' => $task->toArray()
-                ], 201);
-            }
-        }
-    
-        return $this->json([
-            'message' => 'Dados inválidos',
-        ], 400);
-    }
-    
 
-    #[Route('/tasks/{pgnum}/{rgnum}', name: 'task_pagination', methods:['GET'])]
-public function paginateTasks(int $pgnum,int $rgnum, Request $request, TaskRepository $taskRepository, PaginatorInterface $paginator): JsonResponse
+#[Route('/tasks', methods: ['POST'])]
+public function createTask(Request $request, TaskRepository $taskRepository): JsonResponse
 {
+    $data = json_decode($request->getContent(), true);
 
-    $number = $pgnum;
-    $numberg = $rgnum;
-    $page = $request->query->getInt('page', $number); 
-    $perPage = $request->query->getInt('per_page', $numberg); 
+    $task = new Task();
+    $task->setTitle($data['title']);
+  
+    $task->setCreatedAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
+    $task->setUpdateAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
+    // $task->setStTask($data['stTask']);
+    // $task->setConcluded($data['concluded']);
 
-    $pagination = $paginator->paginate(
-        $taskRepository->createQueryBuilder('t'),
-        $page,
-        $perPage
-    );
+    foreach ($data['subTasks'] as $subTaskData) {
+        $subTask = new SubTask();
+        $subTask->setTitle($subTaskData['title']);
+        $task->addSubTask($subTask);
+    }
 
-    $tasks = $pagination->getItems();
-    $totalItems = $pagination->getTotalItemCount();
-    $totalPages = $pagination->getPageCount();
+    $taskRepository->save($task, true);
+
+    // return new JsonResponse(['message' => 'Tarefa criada com sucesso.'], 201);
 
     return $this->json([
-        'page' => $page,
-        'per_page' => $perPage,
-        'total_pages' => $totalPages,
-        'total_items' => $totalItems,
-        'tasks' => $tasks,
-    ], 200);
+                        'message' => 'Task Criada com Sucesso',
+                        'data' => $task->toArray()
+                    ], 201);
 }
 
-
-#[Route('/task/{taskId}', name: 'task_update', methods:['PUT'])]
-public function update(int $taskId, Request $request, ManagerRegistry $doctrine, TaskRepository $taskRepository): JsonResponse
+#[Route('/tasks/sub', name: 'task_list', methods: ['GET'])]
+public function listTasks(TaskRepository $taskRepository): JsonResponse
 {
-    $content = $request->getContent();
-    $data = json_decode($content, true);
+    $tasks = $taskRepository->findAll();
 
-    if (isset($data['title']) && !empty($data['title'])) {
-        $task = $taskRepository->find($taskId);
-
-        if (!$task) {
-            return $this->json([
-                'message' => 'Tarefa não encontrada',
-            ], 404);
-        }
-
-        $task->setTitle($data['title']);
-        $task->setConcluded($data['concluded']);
-        $task->setUpdateAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
-
-        $doctrine->getManager()->flush();
-
-        return $this->json([
-            'message' => 'Tarefa atualizada com sucesso',
-            'data'=> $task->toArray(),
-        ], 200);
-    } else {
-        return $this->json([
-            'message' => 'O campo "title" é obrigatório',
-        ], 400);
+    $responseData = [];
+    foreach ($tasks as $task) {
+        $responseData[] = $task->toArray();
     }
-}
 
-#[Route('/task/{taskId}', name: 'task_delete', methods:['DELETE'])]
-public function delete(int $taskId, TaskRepository $taskRepository, ManagerRegistry $doctrine): JsonResponse
+    if (empty($responseData)) {
+        $responseData = ['message' => 'no data at the moment..'];
+    }
+
+    return new JsonResponse($responseData, 200);
+}
+#[Route('/tasks/{id}', methods: ['DELETE'])]
+public function deleteTask(int $id, TaskRepository $taskRepository, EntityManagerInterface $entityManager): JsonResponse
 {
-    $task = $taskRepository->find($taskId);
+    $task = $taskRepository->find($id);
 
     if (!$task) {
-        return $this->json([
-            'message' => 'Tarefa não encontrada',
-        ], 404);
+        return new JsonResponse(['message' => 'Tarefa não encontrada.'], 404);
     }
 
-    $entityManager = $doctrine->getManager();
     $entityManager->remove($task);
     $entityManager->flush();
 
-    return $this->json([
-        'message' => 'Tarefa excluída com sucesso',
-    ], 200);
+    return new JsonResponse(['message' => 'Tarefa excluída com sucesso.']);
 }
+
+#[Route('/tasks/{id}', name: 'update_task', methods: ['PUT'])]
+    public function updateTask(int $id, Request $request, ManagerRegistry $registry): JsonResponse
+    {
+        $entityManager = $registry->getManager();
+        $task = $entityManager->getRepository(Task::class)->find($id);
+
+        if (!$task) {
+            return new JsonResponse(['error' => 'Tarefa não encontrada.'], 404);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        $task->setTitle($data['title']);
+        $task->setUpdateAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
+
+        $entityManager->flush();
+
+        return $this->json([
+            'message' => 'Tarefa atualizada com sucesso',
+            'data' => $task->toArray(),
+        ], 200);
+    }
+
+
+
+#[Route('/tasks/{id}/subtasks', name: 'create_subtask', methods: ['POST'])]
+    public function createSubtask(int $id, Request $request): JsonResponse
+    {
+        $task = $this->entityManager->getRepository(Task::class)->find($id);
+
+        if (!$task) {
+            return new JsonResponse(['error' => 'Tarefa não encontrada.'], 404);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        $subTask = new SubTask();
+        $subTask->setTitle($data['title']);
+        $subTask->setTask($task);
+
+        $this->entityManager->persist($subTask);
+        $this->entityManager->flush();
+
+        // return new JsonResponse(['message' => 'Subtarefa criada com sucesso.'], 201);
+        return $this->json([
+            'message' => 'Subtarefa criada com sucesso.',
+            'title' => $subTask->getTitle(),
+        ], 201);
+    } 
+
+
+
+    #[Route('/tasks/{taskId}/subtasks/{subtaskId}', name: 'delete_subtask', methods: ['DELETE'])]
+    public function deleteSubtask(int $taskId, int $subtaskId): JsonResponse
+    {
+        $task = $this->entityManager->getRepository(Task::class)->find($taskId);
+
+        if (!$task) {
+            return new JsonResponse(['error' => 'Tarefa não encontrada.'], 404);
+        }
+
+        $subTask = $this->entityManager->getRepository(SubTask::class)->find($subtaskId);
+
+        if (!$subTask) {
+            return new JsonResponse(['error' => 'Subtarefa não encontrada.'], 404);
+        }
+
+       
+        if ($subTask->getTask() !== $task) {
+            return new JsonResponse(['error' => 'Subtarefa não pertence à tarefa especificada.'], 400);
+        }
+
+        $this->entityManager->remove($subTask);
+        $this->entityManager->flush();
+
+        return new JsonResponse(['message' => 'Subtarefa excluída com sucesso.'], 200);
+    }
+
+
 
 
 }
+
+
+
+
+
+

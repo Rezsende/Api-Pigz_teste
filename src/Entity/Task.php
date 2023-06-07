@@ -3,11 +3,14 @@
 namespace App\Entity;
 
 use App\Repository\TaskRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\SubTask;
 
 
 #[ORM\Entity(repositoryClass: TaskRepository::class)]
-#[ORM\Table(name:'task')]
+#[ORM\Table(name: 'task')]
 class Task
 {
     #[ORM\Id]
@@ -15,22 +18,31 @@ class Task
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $created_at = null;
 
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $update_at = null;
 
-   
+    
 
-    #[ORM\Column(length: 255)]
-    private ?string $stTask = null;
+    // #[ORM\Column]
+    // private ?float $concluded = null;
 
-    #[ORM\Column]
-    private ?float $concluded = null;
+    #[ORM\OneToMany(targetEntity: SubTask::class, mappedBy: 'task', cascade: ['persist', 'remove'])]
+    private Collection $subTasks;
+
+    public function __construct()
+    {
+        $this->subTasks = new ArrayCollection();
+        $this->created_at = new \DateTimeImmutable();
+        $this->update_at = new \DateTimeImmutable();
+    }
+
+    // Getters and Setters
 
     public function getId(): ?int
     {
@@ -48,6 +60,7 @@ class Task
 
         return $this;
     }
+
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->created_at;
@@ -72,42 +85,50 @@ class Task
         return $this;
     }
 
+   
+
+    // public function getConcluded(): ?float
+    // {
+    //     return $this->concluded;
+    // }
+
+    // public function setConcluded(float $concluded): self
+    // {
+    //     $this->concluded = $concluded;
+
+    //     return $this;
+    // }
+
+    public function addSubTask(SubTask $subTask): self
+    {
+        if (!$this->subTasks->contains($subTask)) {
+            $subTask->setTask($this);
+            $this->subTasks->add($subTask);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|SubTask[]
+     */
+    public function getSubTasks(): Collection
+    {
+        return $this->subTasks;
+    }
     public function toArray(): array
     {
+        $subTasksData = [];
+    foreach ($this->getSubTasks() as $subTask) {
+        $subTasksData[] = $subTask->toArray();
+    }
         return [
             'id' => $this->getId(),
             'title' => $this->getTitle(),
+            'createdAt' => $this->getCreatedAt()->format('Y-m-d H:i:s'),
+            'updateAt' => $this->getUpdateAt()->format('Y-m-d H:i:s'),
+            'subTasks' => $subTasksData,
             // Adicione aqui outras propriedades que deseja incluir no array
         ];
     }
-
-
-
-    public function getStTask(): ?string
-    {
-        return $this->stTask;
-    }
-
-    public function setStTask(string $stTask): self
-    {
-        $this->stTask = $stTask;
-
-        return $this;
-    }
-
-   
-    public function getConcluded(): ?float
-    {
-        return $this->concluded;
-    }
-
-    public function setConcluded(float $concluded): self
-    {
-        $this->concluded = $concluded;
-
-        return $this;
-    }
-
- 
-
 }
