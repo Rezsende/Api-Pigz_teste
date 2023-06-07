@@ -40,17 +40,5 @@ class TaskRepository extends ServiceEntityRepository
         }
     }
 
-//     public function getTasksWithSubtasks(int $page = 1, int $limit = 10): PaginatorInterface
-// {
-//     $query = $this->createQueryBuilder('t')
-//         ->select('t')
-//         ->leftJoin('t.subtasks', 's')
-//         ->orderBy('t.id', 'ASC')
-//         ->setFirstResult(($page - 1) * $limit)
-//         ->setMaxResults($limit)
-//         ->getQuery();
 
-//     return new Paginator($query);
-// }
-    //Resto do código...
 }

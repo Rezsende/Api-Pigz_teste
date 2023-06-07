@@ -57,7 +57,7 @@ class SubTask
         return [
             'id' => $this->getId(),
             'title' => $this->getTitle(),
-            // Adicione aqui outras propriedades que deseja incluir no array
+           
         ];
     }
 }

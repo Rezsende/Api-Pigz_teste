@@ -27,10 +27,6 @@ class Task
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $update_at = null;
 
-    
-
-    // #[ORM\Column]
-    // private ?float $concluded = null;
 
     #[ORM\OneToMany(targetEntity: SubTask::class, mappedBy: 'task', cascade: ['persist', 'remove'])]
     private Collection $subTasks;
@@ -86,19 +82,6 @@ class Task
     }
 
    
-
-    // public function getConcluded(): ?float
-    // {
-    //     return $this->concluded;
-    // }
-
-    // public function setConcluded(float $concluded): self
-    // {
-    //     $this->concluded = $concluded;
-
-    //     return $this;
-    // }
-
     public function addSubTask(SubTask $subTask): self
     {
         if (!$this->subTasks->contains($subTask)) {
@@ -128,7 +111,7 @@ class Task
             'createdAt' => $this->getCreatedAt()->format('Y-m-d H:i:s'),
             'updateAt' => $this->getUpdateAt()->format('Y-m-d H:i:s'),
             'subTasks' => $subTasksData,
-            // Adicione aqui outras propriedades que deseja incluir no array
+           
         ];
     }
 }

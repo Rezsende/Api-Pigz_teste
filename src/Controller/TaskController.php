@@ -33,8 +33,7 @@ public function createTask(Request $request, TaskRepository $taskRepository): Js
   
     $task->setCreatedAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
     $task->setUpdateAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
-    // $task->setStTask($data['stTask']);
-    // $task->setConcluded($data['concluded']);
+  
 
     foreach ($data['subTasks'] as $subTaskData) {
         $subTask = new SubTask();
