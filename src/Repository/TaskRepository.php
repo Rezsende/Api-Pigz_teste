@@ -39,6 +39,4 @@ class TaskRepository extends ServiceEntityRepository
             $task->getSubTasks()->add($subTask);
         }
     }
-
-
 }

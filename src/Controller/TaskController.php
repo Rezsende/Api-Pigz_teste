@@ -14,6 +14,7 @@ use App\Entity\SubTask;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 
+
 class TaskController extends AbstractController
 {
     private EntityManagerInterface $entityManager;
@@ -22,7 +23,6 @@ class TaskController extends AbstractController
         $this->entityManager = $entityManager;
     }
   
-
 #[Route('/tasks', methods: ['POST'])]
 public function createTask(Request $request, TaskRepository $taskRepository): JsonResponse
 {
@@ -30,6 +30,7 @@ public function createTask(Request $request, TaskRepository $taskRepository): Js
 
     $task = new Task();
     $task->setTitle($data['title']);
+    $task->setTaskFinished(0);
   
     $task->setCreatedAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
     $task->setUpdateAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
@@ -44,29 +45,12 @@ public function createTask(Request $request, TaskRepository $taskRepository): Js
     $taskRepository->save($task, true);
 
     // return new JsonResponse(['message' => 'Tarefa criada com sucesso.'], 201);
-
     return $this->json([
                         'message' => 'Task Criada com Sucesso',
                         'data' => $task->toArray()
                     ], 201);
 }
 
-#[Route('/tasks/sub', name: 'task_list', methods: ['GET'])]
-public function listTasks(TaskRepository $taskRepository): JsonResponse
-{
-    $tasks = $taskRepository->findAll();
-
-    $responseData = [];
-    foreach ($tasks as $task) {
-        $responseData[] = $task->toArray();
-    }
-
-    if (empty($responseData)) {
-        $responseData = ['message' => 'no data at the moment..'];
-    }
-
-    return new JsonResponse($responseData, 200);
-}
 #[Route('/tasks/{id}', methods: ['DELETE'])]
 public function deleteTask(int $id, TaskRepository $taskRepository, EntityManagerInterface $entityManager): JsonResponse
 {
@@ -95,6 +79,7 @@ public function deleteTask(int $id, TaskRepository $taskRepository, EntityManage
         $data = json_decode($request->getContent(), true);
 
         $task->setTitle($data['title']);
+        $task->setTaskFinished($data['TaskFinished']);
         $task->setUpdateAt(new \DateTimeImmutable('now', new \DateTimeZone('America/Sao_Paulo')));
 
         $entityManager->flush();
@@ -104,8 +89,6 @@ public function deleteTask(int $id, TaskRepository $taskRepository, EntityManage
             'data' => $task->toArray(),
         ], 200);
     }
-
-
 
 #[Route('/tasks/{id}/subtasks', name: 'create_subtask', methods: ['POST'])]
     public function createSubtask(int $id, Request $request): JsonResponse
@@ -132,9 +115,7 @@ public function deleteTask(int $id, TaskRepository $taskRepository, EntityManage
         ], 201);
     } 
 
-
-
-    #[Route('/tasks/{taskId}/subtasks/{subtaskId}', name: 'delete_subtask', methods: ['DELETE'])]
+#[Route('/tasks/{taskId}/subtasks/{subtaskId}', name: 'delete_subtask', methods: ['DELETE'])]
     public function deleteSubtask(int $taskId, int $subtaskId): JsonResponse
     {
         $task = $this->entityManager->getRepository(Task::class)->find($taskId);
@@ -159,6 +140,39 @@ public function deleteTask(int $id, TaskRepository $taskRepository, EntityManage
 
         return new JsonResponse(['message' => 'Subtarefa excluída com sucesso.'], 200);
     }
+
+    
+#[Route('/tasks/sub/{nPageParams}/{npRegisParams}/{taskFinished}', name: 'task_list', methods: ['GET'])]
+public function listTasks(int $nPageParams, int $npRegisParams, int $taskFinished, Request $request, TaskRepository $taskRepository, PaginatorInterface $paginator): JsonResponse
+{
+    $nPage = $nPageParams;
+    $npRegis = $npRegisParams;
+
+    $queryBuilder = $taskRepository->createQueryBuilder('t');
+
+    if ($taskFinished === 0 || $taskFinished === 1) {
+        $queryBuilder->andWhere('t.taskFinished = :taskFinished')
+            ->setParameter('taskFinished', $taskFinished);
+    }
+
+    $query = $queryBuilder->getQuery();
+    $pagination = $paginator->paginate(
+        $query,
+        $request->query->getInt('page', $nPage),
+        $npRegis
+    );
+
+    $responseData = [];
+    foreach ($pagination->getItems() as $task) {
+        $responseData[] = $task->toArray();
+    }
+
+    if (empty($responseData)) {
+        $responseData = ['message' => 'No data at the moment.'];
+    }
+
+    return $this->json($responseData, 200);
+}
 
 
 

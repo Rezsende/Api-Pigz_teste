@@ -26,10 +26,12 @@ class Task
 
     #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeImmutable $update_at = null;
-
-
+    
     #[ORM\OneToMany(targetEntity: SubTask::class, mappedBy: 'task', cascade: ['persist', 'remove'])]
     private Collection $subTasks;
+
+    #[ORM\Column]
+    private ?int $taskFinished = null;
 
     public function __construct()
     {
@@ -81,7 +83,6 @@ class Task
         return $this;
     }
 
-   
     public function addSubTask(SubTask $subTask): self
     {
         if (!$this->subTasks->contains($subTask)) {
@@ -108,10 +109,22 @@ class Task
         return [
             'id' => $this->getId(),
             'title' => $this->getTitle(),
+            'TaskFinished'=> $this->getTaskFinished(),
             'createdAt' => $this->getCreatedAt()->format('Y-m-d H:i:s'),
             'updateAt' => $this->getUpdateAt()->format('Y-m-d H:i:s'),
             'subTasks' => $subTasksData,
-           
         ];
+    }
+
+    public function getTaskFinished(): ?int
+    {
+        return $this->taskFinished;
+    }
+
+    public function setTaskFinished(int $taskFinished): self
+    {
+        $this->taskFinished = $taskFinished;
+
+        return $this;
     }
 }
