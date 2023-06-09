@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\TaskRepository;
+use App\Repository\UserRepository;
 use App\Entity\Task;
 use Knp\Component\Pager\PaginatorInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -15,6 +16,7 @@ use App\Validator\TaskValidator;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\DBAL\Types\Type;
+use App\Entity\User;
 
 class TaskController extends AbstractController
 {
@@ -64,9 +66,12 @@ class TaskController extends AbstractController
     }    
    
     #[Route('/tasks', methods: ['POST'])]
-    public function createTask(Request $request, TaskRepository $taskRepository): JsonResponse
+    public function createTask(ManagerRegistry $doctrine, Request $request, TaskRepository $taskRepository): JsonResponse
     {
+        $users = $doctrine->getrepository(User::class)->findAll();
         $data = json_decode($request->getContent(), true);
+
+        
     
         $errors = $this->taskValidator->validatePost($data);
         if (!empty($errors)) {

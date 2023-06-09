@@ -28,9 +28,9 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        main:
-            lazy: true
-            provider: app_user_provider
+        # main:
+        #     lazy: true
+        #     provider: app_user_provider
 
             # json_login:
             #     check_path: /authentication_token
@@ -49,7 +49,7 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/api/users, roles: ROLE_USER }
+        - { path: ^/tasks, roles: ROLE_USER }
         # - { path: ^/authentication_token, roles: PUBLIC_ACCESS }
 
 when@test:
