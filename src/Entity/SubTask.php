@@ -1,9 +1,7 @@
 <?php
 namespace App\Entity;
 
-
-
-
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
@@ -21,8 +19,7 @@ class SubTask
     #[ORM\ManyToOne(targetEntity: Task::class, inversedBy: 'subTasks')]
     private ?Task $task = null;
 
-    // ...
-
+    
     public function getId(): ?int
     {
         return $this->id;
@@ -57,7 +54,18 @@ class SubTask
         return [
             'id' => $this->getId(),
             'title' => $this->getTitle(),
-           
         ];
+    }
+
+    public function getFinaldateTask(): ?\DateTimeImmutable
+    {
+        return $this->finaldateTask;
+    }
+
+    public function setFinaldateTask(\DateTimeImmutable $finaldateTask): self
+    {
+        $this->finaldateTask = $finaldateTask;
+
+        return $this;
     }
 }

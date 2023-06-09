@@ -7,3 +7,4 @@ controllers:
 authentication_token:
     path: /authentication_token
 
+# api_login_check: /api/login_check
