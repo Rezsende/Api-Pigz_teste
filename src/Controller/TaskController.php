@@ -30,7 +30,7 @@ class TaskController extends AbstractController
     }
 
     #[Route('/tasks/sub/{nPageParams}/{npRegisParams}/{taskFinished}', name: 'task_list', methods: ['GET'])]
-    public function listTasks(int $nPageParams, int $npRegisParams, int $taskFinished, Request $request, TaskRepository $taskRepository, PaginatorInterface $paginator): JsonResponse
+    public function listTasks(ManagerRegistry $doctrineint, $nPageParams, int $npRegisParams, int $taskFinished, Request $request, TaskRepository $taskRepository, PaginatorInterface $paginator): JsonResponse
     {
         $nPage = $nPageParams;
         $npRegis = $npRegisParams;
@@ -65,14 +65,21 @@ class TaskController extends AbstractController
         ], 201);
     }    
    
+    #[Security('is_granted("ROLE_USER")')]
     #[Route('/tasks', methods: ['POST'])]
-    public function createTask(ManagerRegistry $doctrine, Request $request, TaskRepository $taskRepository): JsonResponse
+    public function createTask(Request $request, TaskRepository $taskRepository): JsonResponse
     {
-        $users = $doctrine->getrepository(User::class)->findAll();
-        $data = json_decode($request->getContent(), true);
-
         
-    
+     $token = $request->headers->get('Authorization');
+        if (!$token || !preg_match('/^Bearer\s+(.*?)$/', $token, $matches)) {
+                return $this->json(['message' => 'Not authorized. Invalid JWT authentication token.'], 401);
+        }
+           $jwtToken = $matches[1];
+
+          
+       
+     
+        $data = json_decode($request->getContent(), true);
         $errors = $this->taskValidator->validatePost($data);
         if (!empty($errors)) {
         return $this->json(['errors' => $errors], 400);
@@ -104,9 +111,30 @@ class TaskController extends AbstractController
                     ], 201);
     }
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    #[Security('is_granted("ROLE_USER")')]
     #[Route('/tasks/{id}', methods: ['DELETE'])]
-    public function deleteTask(int $id, TaskRepository $taskRepository, EntityManagerInterface $entityManager): JsonResponse
+    public function deleteTask(Request $request, int $id, TaskRepository $taskRepository, EntityManagerInterface $entityManager): JsonResponse
     {
+
+        $token = $request->headers->get('Authorization');
+        if (!$token || !preg_match('/^Bearer\s+(.*?)$/', $token, $matches)) {
+                return $this->json(['message' => 'Not authorized. Invalid JWT authentication token.'], 401);
+        }
+           $jwtToken = $matches[1];
+
+
         $task = $taskRepository->find($id);
 
     if (!$task) {
@@ -119,9 +147,18 @@ class TaskController extends AbstractController
     return new JsonResponse(['message' => 'task deleted successfully!']);
     }
 
+    #[Security('is_granted("ROLE_USER")')]
     #[Route('/tasks/{id}', name: 'update_task', methods: ['PUT'])]
     public function updateTask(int $id, Request $request, ManagerRegistry $registry): JsonResponse
     {
+
+        $token = $request->headers->get('Authorization');
+        if (!$token || !preg_match('/^Bearer\s+(.*?)$/', $token, $matches)) {
+                return $this->json(['message' => 'Not authorized. Invalid JWT authentication token.'], 401);
+        }
+           $jwtToken = $matches[1];
+
+
         $entityManager = $registry->getManager();
         $task = $entityManager->getRepository(Task::class)->find($id);
 
@@ -147,10 +184,16 @@ class TaskController extends AbstractController
             'data' => $task->toArray(),
         ], 200);
     }
-
+    #[Security('is_granted("ROLE_USER")')]
     #[Route('/tasks/{id}/subtasks', name: 'create_subtask', methods: ['POST'])]
     public function createSubtask(int $id, Request $request): JsonResponse
     {
+
+        $token = $request->headers->get('Authorization');
+        if (!$token || !preg_match('/^Bearer\s+(.*?)$/', $token, $matches)) {
+                return $this->json(['message' => 'Not authorized. Invalid JWT authentication token.'], 401);
+        }
+           $jwtToken = $matches[1];
         $task = $this->entityManager->getRepository(Task::class)->find($id);
 
         if (!$task) {
@@ -180,9 +223,15 @@ class TaskController extends AbstractController
         ], 201);
     } 
 
+    #[Security('is_granted("ROLE_USER")')]
     #[Route('/tasks/{taskId}/subtasks/{subtaskId}', name: 'delete_subtask', methods: ['DELETE'])]
-    public function deleteSubtask(int $taskId, int $subtaskId): JsonResponse
+    public function deleteSubtask(int $taskId, int $subtaskId, Request $request): JsonResponse
     {
+        $token = $request->headers->get('Authorization');
+        if (!$token || !preg_match('/^Bearer\s+(.*?)$/', $token, $matches)) {
+                return $this->json(['message' => 'Not authorized. Invalid JWT authentication token.'], 401);
+        }
+           $jwtToken = $matches[1];
         $task = $this->entityManager->getRepository(Task::class)->find($taskId);
 
         if (!$task) {
@@ -207,6 +256,9 @@ class TaskController extends AbstractController
     }
 
     
+
+   
+
 
 
 }
